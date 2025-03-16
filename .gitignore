@@ -1,0 +1,6 @@
+.DS_Store
+
+docker/build
+docker/run
+
+photoapp-config.ini
