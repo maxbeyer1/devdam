@@ -660,8 +660,11 @@ def upload(baseurl):
             print(f"Local file '{local_filename}' does not exist...")
             return
 
-        print("Enter user id>")
-        userid = input()
+        print("Enter project id>")
+        projectid = input()
+
+        print("Enter asset description (optional)>")
+        description = input()
 
         #
         # build the data packet:
@@ -679,13 +682,14 @@ def upload(baseurl):
         data = base64.b64encode(bytes)
         datastr = data.decode()
 
-        data = {"assetname": local_filename, "data": datastr}
+        data = {"assetname": local_filename,
+                "description": description, "data": datastr}
 
         #
         # call the web service:
         #
-        api = '/image'
-        url = baseurl + api + "/" + userid
+        api = '/asset'
+        url = baseurl + api + "/" + projectid
 
         res = requests.post(url, json=data)
 
@@ -703,7 +707,7 @@ def upload(baseurl):
             return
 
         #
-        # success, extract userid:
+        # success, extract asset id:
         #
         body = res.json()
 
