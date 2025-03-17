@@ -1,8 +1,10 @@
-.DS_Store
-
+# Docker
 docker/build
 docker/run
 
-photoapp-config.ini
-
+# Dev env
 *-output.xml
+.vscode
+.DS_Store
+
+photoapp-config.ini

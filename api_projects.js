@@ -2,8 +2,8 @@
 //
 // Project management API endpoints
 //
-const photoapp_db = require('./photoapp_db.js');
-const { query_database } = require('./utility.js');
+const photoapp_db = require("./photoapp_db.js");
+const { query_database } = require("./utility.js");
 
 //
 // GET /projects - Get list of projects
@@ -22,12 +22,12 @@ exports.get_projects = async (req, res) => {
       FROM projects p
       JOIN clients c ON p.clientid = c.clientid
     `;
-    
+
     // Add client filter if provided
     if (clientid) {
       sql += ` WHERE p.clientid = ${clientid}`;
     }
-    
+
     // Add pagination
     sql += ` LIMIT ${limit} OFFSET ${offset}`;
 
@@ -37,17 +37,16 @@ exports.get_projects = async (req, res) => {
 
     // Format response
     res.json({
-      "message": "success",
-      "data": results
+      message: "success",
+      data: results,
     });
-  }
-  catch (err) {
+  } catch (err) {
     console.log("**Error in /projects");
     console.log(err.message);
-    
+
     res.status(500).json({
-      "message": err.message,
-      "data": []
+      message: err.message,
+      data: [],
     });
   }
 };
@@ -60,12 +59,11 @@ exports.get_project = async (req, res) => {
 
   try {
     let projectid = req.params.projectid;
-    
-    // Validate projectid
+
     if (isNaN(projectid)) {
       res.status(400).json({
-        "message": "Invalid project ID format",
-        "data": null
+        message: "Invalid project ID format",
+        data: null,
       });
       return;
     }
@@ -86,17 +84,16 @@ exports.get_project = async (req, res) => {
     //   WHERE projectid = ${projectid};
     // `;
 
-    // Execute both queries concurrently
     let [projectResult, statsResult] = await Promise.all([
       query_database(photoapp_db, sql),
-    //   query_database(photoapp_db, sql2)
+      //   query_database(photoapp_db, sql2)
     ]);
 
     // Check if project exists
     if (projectResult.length === 0) {
       res.status(404).json({
-        "message": "Project not found",
-        "data": null
+        message: "Project not found",
+        data: null,
       });
       return;
     }
@@ -108,17 +105,16 @@ exports.get_project = async (req, res) => {
 
     // Return project details with statistics
     res.json({
-      "message": "success",
-      "data": project
+      message: "success",
+      data: project,
     });
-  }
-  catch (err) {
+  } catch (err) {
     console.log("**Error in /project/:projectid");
     console.log(err.message);
-    
+
     res.status(500).json({
-      "message": err.message,
-      "data": null
+      message: err.message,
+      data: null,
     });
   }
 };
@@ -134,13 +130,14 @@ exports.put_project = async (req, res) => {
     let projectid = data.projectid;
     let clientid = data.clientid;
     let projectname = data.projectname;
-    let description = data.description || '';
+    let description = data.description || "";
 
     // Required fields
     if (!clientid || !projectname) {
       res.status(400).json({
-        "message": "Missing required fields: clientid and projectname are required",
-        "projectid": null
+        message:
+          "Missing required fields: clientid and projectname are required",
+        projectid: null,
       });
       return;
     }
@@ -148,31 +145,31 @@ exports.put_project = async (req, res) => {
     // Check if client exists
     let clientSql = `SELECT clientid FROM clients WHERE clientid = ${clientid}`;
     let clientResult = await query_database(photoapp_db, clientSql);
-    
+
     if (clientResult.length === 0) {
       res.status(404).json({
-        "message": "Client not found",
-        "projectid": null
+        message: "Client not found",
+        projectid: null,
       });
       return;
     }
 
     let result;
-    
+
     // If projectid is provided update existing project
     if (projectid) {
       // Check if project exists
       let checkSql = `SELECT projectid FROM projects WHERE projectid = ${projectid}`;
       let checkResult = await query_database(photoapp_db, checkSql);
-      
+
       if (checkResult.length === 0) {
         res.status(404).json({
-          "message": "Project not found",
-          "projectid": null
+          message: "Project not found",
+          projectid: null,
         });
         return;
       }
-      
+
       // Update project
       let updateSql = `
         UPDATE projects
@@ -181,36 +178,35 @@ exports.put_project = async (req, res) => {
             description = '${description}'
         WHERE projectid = ${projectid};
       `;
-      
+
       result = await query_database(photoapp_db, updateSql);
-      
+
       res.json({
-        "message": "Project updated successfully",
-        "projectid": projectid
+        message: "Project updated successfully",
+        projectid: projectid,
       });
-    } 
+    }
     // If not create new project
     else {
       let insertSql = `
         INSERT INTO projects (clientid, projectname, description)
         VALUES (${clientid}, '${projectname}', '${description}');
       `;
-      
+
       result = await query_database(photoapp_db, insertSql);
-      
+
       res.json({
-        "message": "Project created successfully",
-        "projectid": result.insertId
+        message: "Project created successfully",
+        projectid: result.insertId,
       });
     }
-  }
-  catch (err) {
+  } catch (err) {
     console.log("**Error in /project");
     console.log(err.message);
-    
+
     res.status(500).json({
-      "message": err.message,
-      "projectid": null
+      message: err.message,
+      projectid: null,
     });
   }
 };
@@ -223,10 +219,10 @@ exports.delete_project = async (req, res) => {
 
   try {
     let projectid = req.params.projectid;
-    
+
     if (isNaN(projectid)) {
       res.status(400).json({
-        "message": "Invalid project ID format"
+        message: "Invalid project ID format",
       });
       return;
     }
@@ -237,12 +233,12 @@ exports.delete_project = async (req, res) => {
       FROM assets
       WHERE projectid = ${projectid};
     `;
-    
+
     let checkResult = await query_database(photoapp_db, checkSql);
-    
+
     if (checkResult[0].asset_count > 0) {
       res.status(400).json({
-        "message": "Cannot delete project with existing assets"
+        message: "Cannot delete project with existing assets",
       });
       return;
     }
@@ -252,26 +248,25 @@ exports.delete_project = async (req, res) => {
       DELETE FROM projects
       WHERE projectid = ${projectid};
     `;
-    
+
     let result = await query_database(photoapp_db, deleteSql);
-    
+
     if (result.affectedRows === 0) {
       res.status(404).json({
-        "message": "Project not found"
+        message: "Project not found",
       });
       return;
     }
-    
+
     res.json({
-      "message": "Project deleted successfully"
+      message: "Project deleted successfully",
     });
-  }
-  catch (err) {
+  } catch (err) {
     console.log("**Error in DELETE /project/:projectid");
     console.log(err.message);
-    
+
     res.status(500).json({
-      "message": err.message
+      message: err.message,
     });
   }
 };

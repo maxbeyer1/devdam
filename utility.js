@@ -14,11 +14,9 @@
 //   sql: query string to execute
 //   params: optional array of parameters to inject into query string
 //
-function query_database(db, sql, params = [])
-{
+function query_database(db, sql, params = []) {
   let response = new Promise((resolve, reject) => {
-    try 
-    {
+    try {
       //
       // execute the query, and when we get the callback from
       // the database server, either resolve with the results
@@ -27,18 +25,16 @@ function query_database(db, sql, params = [])
       db.query(sql, params, (err, results, _) => {
         if (err) {
           reject(err);
-        }
-        else {
+        } else {
           resolve(results);
         }
       });
-    }
-    catch (err) {
+    } catch (err) {
       reject(err);
     }
   });
-  
-  // 
+
+  //
   // return the PROMISE back to the caller, which will
   // eventually resolve to results or an error:
   //
@@ -48,4 +44,4 @@ function query_database(db, sql, params = [])
 //
 // list the functions we are exporting:
 //
-module.exports = { query_database, };
+module.exports = { query_database };

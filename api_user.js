@@ -6,16 +6,14 @@
 // user's data is updated (name and bucket folder).
 // Returns the user's userid in the database.
 //
-const photoapp_db = require('./photoapp_db.js')
-const { query_database } = require('./utility.js');
+const photoapp_db = require("./photoapp_db.js");
+const { query_database } = require("./utility.js");
 
 exports.put_user = async (req, res) => {
-
   console.log("**Call to put /user...");
 
   try {
-
-    let data = req.body;  // data => JS object
+    let data = req.body; // data => JS object
 
     console.log(data);
 
@@ -56,14 +54,14 @@ exports.put_user = async (req, res) => {
       if (update_res.affectedRows == 1) {
         console.log("/user: updated user in DB");
         res.json({
-          "message": "updated",
-          "user_id": userid
+          message: "updated",
+          user_id: userid,
         });
       } else {
         console.log("/user: failed to update user in DB");
         res.status(500).json({
-          "message": "failed to update",
-          "user_id": userid
+          message: "failed to update",
+          user_id: userid,
         });
       }
     } else {
@@ -80,27 +78,25 @@ exports.put_user = async (req, res) => {
       if (insert_res.affectedRows == 1) {
         console.log("/user: inserted user in DB");
         res.json({
-          "message": "inserted",
-          "user_id": insert_res.insertId
+          message: "inserted",
+          user_id: insert_res.insertId,
         });
       } else {
         console.log("/user: failed to insert user in DB");
         res.status(500).json({
-          "message": "failed to insert",
-          "user_id": -1
+          message: "failed to insert",
+          user_id: -1,
         });
       }
     }
-	
-  }//try
-  catch (err) {
+  } catch (err) {
+    //try
     console.log("**Error in /user");
     console.log(err.message);
 
     res.status(500).json({
-      "message": err.message,
-      "user_id": -1
+      message: err.message,
+      user_id: -1,
     });
-  }//catch
-
-}//put
+  } //catch
+}; //put

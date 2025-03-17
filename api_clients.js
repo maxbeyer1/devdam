@@ -2,8 +2,8 @@
 //
 // Client management API endpoints
 //
-const photoapp_db = require('./photoapp_db.js');
-const { query_database } = require('./utility.js');
+const photoapp_db = require("./photoapp_db.js");
+const { query_database } = require("./utility.js");
 
 //
 // GET /clients - Get list of clients
@@ -31,17 +31,16 @@ exports.get_clients = async (req, res) => {
     console.log("/clients: got results from DB");
 
     res.json({
-      "message": "success",
-      "data": results
+      message: "success",
+      data: results,
     });
-  }
-  catch (err) {
+  } catch (err) {
     console.log("**Error in /clients");
     console.log(err.message);
-    
+
     res.status(500).json({
-      "message": err.message,
-      "data": []
+      message: err.message,
+      data: [],
     });
   }
 };
@@ -54,12 +53,12 @@ exports.get_client = async (req, res) => {
 
   try {
     let clientid = req.params.clientid;
-    
+
     // Validate clientid
     if (isNaN(clientid)) {
       res.status(400).json({
-        "message": "Invalid client ID format",
-        "data": null
+        message: "Invalid client ID format",
+        data: null,
       });
       return;
     }
@@ -88,17 +87,18 @@ exports.get_client = async (req, res) => {
       WHERE p.clientid = ${clientid};
     `;
 
-    let [clientResult, projectCountResult, assetCountResult] = await Promise.all([
-      query_database(photoapp_db, sql),
-      query_database(photoapp_db, sql2),
-      query_database(photoapp_db, sql3)
-    ]);
+    let [clientResult, projectCountResult, assetCountResult] =
+      await Promise.all([
+        query_database(photoapp_db, sql),
+        query_database(photoapp_db, sql2),
+        query_database(photoapp_db, sql3),
+      ]);
 
     // Make sure client exists
     if (clientResult.length === 0) {
       res.status(404).json({
-        "message": "Client not found",
-        "data": null
+        message: "Client not found",
+        data: null,
       });
       return;
     }
@@ -110,17 +110,16 @@ exports.get_client = async (req, res) => {
 
     // Return client details
     res.json({
-      "message": "success",
-      "data": client
+      message: "success",
+      data: client,
     });
-  }
-  catch (err) {
+  } catch (err) {
     console.log("**Error in /client/:clientid");
     console.log(err.message);
-    
+
     res.status(500).json({
-      "message": err.message,
-      "data": null
+      message: err.message,
+      data: null,
     });
   }
 };
@@ -136,13 +135,13 @@ exports.put_client = async (req, res) => {
     let clientid = data.clientid;
     let userid = data.userid;
     let clientname = data.clientname;
-    let description = data.description || '';
+    let description = data.description || "";
 
     // Validate required fields
     if (!userid || !clientname) {
       res.status(400).json({
-        "message": "Missing required fields: userid and clientname are required",
-        "clientid": null
+        message: "Missing required fields: userid and clientname are required",
+        clientid: null,
       });
       return;
     }
@@ -150,31 +149,31 @@ exports.put_client = async (req, res) => {
     // Check if user exists
     let userSql = `SELECT userid FROM users WHERE userid = ${userid}`;
     let userResult = await query_database(photoapp_db, userSql);
-    
+
     if (userResult.length === 0) {
       res.status(404).json({
-        "message": "User not found",
-        "clientid": null
+        message: "User not found",
+        clientid: null,
       });
       return;
     }
 
     let result;
-    
+
     // If clientid is provided, update existing client
     if (clientid) {
       // Check if client exists
       let checkSql = `SELECT clientid FROM clients WHERE clientid = ${clientid}`;
       let checkResult = await query_database(photoapp_db, checkSql);
-      
+
       if (checkResult.length === 0) {
         res.status(404).json({
-          "message": "Client not found",
-          "clientid": null
+          message: "Client not found",
+          clientid: null,
         });
         return;
       }
-      
+
       // Update client
       let updateSql = `
         UPDATE clients
@@ -183,36 +182,35 @@ exports.put_client = async (req, res) => {
             description = '${description}'
         WHERE clientid = ${clientid};
       `;
-      
+
       result = await query_database(photoapp_db, updateSql);
-      
+
       res.json({
-        "message": "Client updated successfully",
-        "clientid": clientid
+        message: "Client updated successfully",
+        clientid: clientid,
       });
-    } 
+    }
     // Otherwise create new client
     else {
       let insertSql = `
         INSERT INTO clients (userid, clientname, description)
         VALUES (${userid}, '${clientname}', '${description}');
       `;
-      
+
       result = await query_database(photoapp_db, insertSql);
-      
+
       res.json({
-        "message": "Client created successfully",
-        "clientid": result.insertId
+        message: "Client created successfully",
+        clientid: result.insertId,
       });
     }
-  }
-  catch (err) {
+  } catch (err) {
     console.log("**Error in /client");
     console.log(err.message);
-    
+
     res.status(500).json({
-      "message": err.message,
-      "clientid": null
+      message: err.message,
+      clientid: null,
     });
   }
 };
@@ -225,11 +223,11 @@ exports.delete_client = async (req, res) => {
 
   try {
     let clientid = req.params.clientid;
-    
+
     // Validate clientid
     if (isNaN(clientid)) {
       res.status(400).json({
-        "message": "Invalid client ID format"
+        message: "Invalid client ID format",
       });
       return;
     }
@@ -240,12 +238,12 @@ exports.delete_client = async (req, res) => {
       FROM projects
       WHERE clientid = ${clientid};
     `;
-    
+
     let checkResult = await query_database(photoapp_db, checkSql);
-    
+
     if (checkResult[0].project_count > 0) {
       res.status(400).json({
-        "message": "Cannot delete client with existing projects"
+        message: "Cannot delete client with existing projects",
       });
       return;
     }
@@ -255,26 +253,25 @@ exports.delete_client = async (req, res) => {
       DELETE FROM clients
       WHERE clientid = ${clientid};
     `;
-    
+
     let result = await query_database(photoapp_db, deleteSql);
-    
+
     if (result.affectedRows === 0) {
       res.status(404).json({
-        "message": "Client not found"
+        message: "Client not found",
       });
       return;
     }
-    
+
     res.json({
-      "message": "Client deleted successfully"
+      message: "Client deleted successfully",
     });
-  }
-  catch (err) {
+  } catch (err) {
     console.log("**Error in DELETE /client/:clientid");
     console.log(err.message);
-    
+
     res.status(500).json({
-      "message": err.message
+      message: err.message,
     });
   }
 };
