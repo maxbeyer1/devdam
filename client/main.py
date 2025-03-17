@@ -31,7 +31,7 @@ from configparser import ConfigParser
 # classes
 #
 class User:
-    userid: int  # these must match columns from DB table
+    userid: int
     email: str
     lastname: str
     firstname: str
@@ -40,28 +40,31 @@ class User:
 
 class Client:
     clientid: int
-    userid: int
+    user: User
     clientname: str
     description: str
     created_at: str
+    project_count: int
+    asset_count: int
 
 
 class Project:
     projectid: int
-    clientid: int
+    client: Client
     projectname: str
     description: str
     created_at: str
+    asset_count: int
 
 
 class Asset:
-    assetid: int  # these must match columns from DB table
-    userid: int
-    projectid: int
+    assetid: int
     assetname: str
     description: str
     bucketkey: str
     created_at: str
+    project: Project
+    client: Client
 
 
 class BucketItem:
@@ -436,6 +439,9 @@ def assets(baseurl):
             # failed:
             print("Failed with status code:", res.status_code)
             print("url: " + url)
+            if res.status_code == 404:
+                print("No assets found...")
+                return
             if res.status_code in [400, 500]:  # we'll have an error message
                 body = res.json()
                 print("Error message:", body["message"])
@@ -446,6 +452,7 @@ def assets(baseurl):
         # deserialize and extract assets:
         #
         body = res.json()
+
         #
         # let's map each dictionary into an Asset object:
         #
@@ -453,14 +460,18 @@ def assets(baseurl):
         for row in body["data"]:
             asset = jsons.load(row, Asset)
             assets.append(asset)
-        #
-        # Now we can think OOP:
-        #
+
         for asset in assets:
             print(f"Asset id: {asset.assetid}")
-            print(f" User id: {asset.userid}")
             print(f" Asset name: {asset.assetname}")
+            print(f" Description: {asset.description}")
             print(f" Bucket key: {asset.bucketkey}")
+            print(f"Created at: {asset.created_at}")
+            print(
+                f" Project: {asset.project.projectname} ({asset.project.projectid})")
+            print(
+                f" Client: {asset.client.clientname} ({asset.client.clientid})")
+            print()
 
     except Exception as e:
         logging.error("assets() failed:")

@@ -35,13 +35,14 @@ exports.get_assets = async (req, res) => {
       return;
     }
 
-    // Format response to match API definition
+    // Format response
     let assets = results.map((asset) => {
       return {
         assetid: asset.assetid,
         assetname: asset.assetname,
         description: asset.description || "",
         created_at: asset.created_at,
+        bucketkey: asset.bucketkey,
         project: {
           projectid: asset.projectid,
           projectname: asset.projectname,

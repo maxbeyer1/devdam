@@ -77,16 +77,16 @@ exports.get_project = async (req, res) => {
       WHERE p.projectid = ${projectid};
     `;
 
-    // Get asset count and storage used
-    // let sql2 = `
-    //   SELECT COUNT(*) AS asset_count, SUM(filesize) AS storage_used
-    //   FROM assets
-    //   WHERE projectid = ${projectid};
-    // `;
+    // Get asset count
+    let sql2 = `
+      SELECT COUNT(*) AS asset_count
+      FROM assets
+      WHERE projectid = ${projectid};
+    `;
 
     let [projectResult, statsResult] = await Promise.all([
       query_database(photoapp_db, sql),
-      //   query_database(photoapp_db, sql2)
+      query_database(photoapp_db, sql2),
     ]);
 
     // Check if project exists
@@ -100,8 +100,7 @@ exports.get_project = async (req, res) => {
 
     // Combine results
     let project = projectResult[0];
-    // project.asset_count = statsResult[0].asset_count;
-    // project.storage_used = statsResult[0].storage_used || 0;
+    project.asset_count = statsResult[0].asset_count;
 
     // Return project details with statistics
     res.json({

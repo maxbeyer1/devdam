@@ -108,7 +108,6 @@ exports.get_client = async (req, res) => {
     client.project_count = projectCountResult[0].project_count;
     client.asset_count = assetCountResult[0].asset_count;
 
-    // Return client details
     res.json({
       message: "success",
       data: client,
