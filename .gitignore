@@ -1,10 +1,11 @@
 # Docker
-docker/build
-docker/run
+**/docker/build
+**/docker/run
 
 # Dev env
-*-output.xml
+**/*-output.xml
+**/.DS_Store
+**/.bash_history
 .vscode
-.DS_Store
 
 photoapp-config.ini
