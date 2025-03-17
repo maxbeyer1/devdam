@@ -74,20 +74,42 @@ app.get('/', (req, res) => {
 //
 // web service functions (API):
 //
+
+// System operations
 let stats = require('./api_stats.js');
-let users = require('./api_users.js');
-let assets = require('./api_assets.js');
 let bucket = require('./api_bucket.js');
-let download = require('./api_image_get.js');
+
+// User management
+let users = require('./api_users.js');
 let user = require('./api_user.js');
+
+// Client management
+let clients = require('./api_clients.js');
+
+// Project management
+let projects = require('./api_projects.js');
+
+// Asset management
+let assets = require('./api_assets.js');
+let download = require('./api_image_get.js');
 let upload = require('./api_image_post.js');
 
 app.get('/stats', stats.get_stats);  
-app.get('/users', users.get_users);  
-app.get('/assets', assets.get_assets);  
 app.get('/bucket', bucket.get_bucket);  
-app.get('/image/:assetid', download.get_image);
 
+app.get('/users', users.get_users);  
 app.put('/user', user.put_user);
 
+app.get('/clients', clients.get_clients);
+app.get('/client/:clientid', clients.get_client);
+app.put('/client', clients.put_client);
+app.delete('/client/:clientid', clients.delete_client);
+
+app.get('/projects', projects.get_projects);
+app.get('/project/:projectid', projects.get_project);
+app.put('/project', projects.put_project);
+app.delete('/project/:projectid', projects.delete_project);
+
+app.get('/assets', assets.get_assets);  
+app.get('/image/:assetid', download.get_image);
 app.post('/image/:userid', upload.post_image);
