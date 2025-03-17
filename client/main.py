@@ -309,12 +309,22 @@ def stats(baseurl):
         body = res.json()
         #
         msg = body["message"]
-        numusers = body["db_numUsers"]
-        numassets = body["db_numAssets"]
+
+        if msg != "success":
+            print("Failed with message:", msg)
+            return
+
+        bucket_status = body["bucket_status"]
+        num_users = body["users"]
+        num_clients = body["clients"]
+        num_projects = body["projects"]
+        num_assets = body["assets"]
         #
-        print(f"bucket status: {msg}")
-        print(f"# of users in PhotoApp DB: {numusers}")
-        print(f"# of assets in PhotoApp DB: {numassets}")
+        print(f"bucket status: {bucket_status}")
+        print(f"# of users in DevDAM DB: {num_users}")
+        print(f"# of clients in DevDAM DB: {num_clients}")
+        print(f"# of projects in DevDAM DB: {num_projects}")
+        print(f"# of assets in DevDAM DB: {num_assets}")
 
     except Exception as e:
         logging.error("stats() failed:")
@@ -374,9 +384,11 @@ def users(baseurl):
         for row in body["data"]:
             user = jsons.load(row, User)
             users.append(user)
-        #
-        # Now we can think OOP:
-        #
+
+        if len(users) == 0:
+            print("No users found...")
+            return
+
         for user in users:
             print(f"User id: {user.userid}")
             print(f" Email: {user.email}")

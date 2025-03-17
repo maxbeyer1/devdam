@@ -33,7 +33,7 @@ exports.get_stats = async (req, res) => {
     let command = new HeadBucketCommand(input);
     let s3_promise = photoapp_s3.send(command);
 
-    // Get user count (keep existing code)
+    // Get user count
     let sql1 = `SELECT count(*) As NumUsers FROM users;`;
     let mysql_promise1 = query_database(photoapp_db, sql1);
 
@@ -45,7 +45,7 @@ exports.get_stats = async (req, res) => {
     let sql3 = `SELECT count(*) As NumProjects FROM projects;`;
     let mysql_promise3 = query_database(photoapp_db, sql3);
 
-    // Get asset count (keep existing code)
+    // Get asset count
     let sql4 = `SELECT count(*) As NumAssets FROM assets;`;
     let mysql_promise4 = query_database(photoapp_db, sql4);
 
@@ -67,16 +67,19 @@ exports.get_stats = async (req, res) => {
     console.log("/stats done, sending response...");
 
     res.json({
+      message: "success",
+      bucket_status: results[0].$metadata.httpStatusCode,
       users: results[1][0].NumUsers,
       clients: results[2][0].NumClients,
       projects: results[3][0].NumProjects,
       assets: results[4][0].NumAssets,
-      processing_jobs: {
-        pending: 0,
-        processing: 0,
-        completed: results[4][0].NumAssets,
-        failed: 0,
-      },
+      // FOR FUTURE USE:
+      // processing_jobs: {
+      //   pending: 0,
+      //   processing: 0,
+      //   completed: results[4][0].NumAssets,
+      //   failed: 0,
+      // },
     });
   } catch (err) {
     //try
@@ -94,7 +97,7 @@ exports.get_stats = async (req, res) => {
       clients: -1,
       projects: -1,
       assets: -1,
-      processing_jobs: null,
+      // processing_jobs: null,
     });
   } //catch
 }; //get
