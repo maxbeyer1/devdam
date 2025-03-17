@@ -30,64 +30,54 @@ exports.get_stats = async (req, res) => {
     console.log("/stats: calling S3...");
 
     let command = new HeadBucketCommand(input);
-    let s3_promise = photoapp_s3.send(command); 
+    let s3_promise = photoapp_s3.send(command);
 
-    //
-    // calling MySQL to get # of users. For consistency, we 
-    // turn each DB call with callback into a PROMISE so 
-    // we can wait for it while we wait for the other 
-    // responses...
-    //
-    let sql = `
-        Select count(*) As NumUsers From users;
-        `;
-   
-    console.log("/stats: calling RDS to get # of users...");
+    // Get user count (keep existing code)
+    let sql1 = `SELECT count(*) As NumUsers FROM users;`;
+    let mysql_promise1 = query_database(photoapp_db, sql1);
     
-    let mysql_promise1 = query_database(photoapp_db, sql);
+    // Add client count
+    let sql2 = `SELECT count(*) As NumClients FROM clients;`;
+    let mysql_promise2 = query_database(photoapp_db, sql2);
     
-    //
-    // now execute another query to get # of assets:
-    //
-    sql = `
-        Select count(*) As NumAssets From assets;
-        `;
-   
-    console.log("/stats: calling RDS to get # of assets...");
+    // Add project count
+    let sql3 = `SELECT count(*) As NumProjects FROM projects;`;
+    let mysql_promise3 = query_database(photoapp_db, sql3);
     
-    let mysql_promise2 = query_database(photoapp_db, sql);
+    // Get asset count (keep existing code)
+    let sql4 = `SELECT count(*) As NumAssets FROM assets;`;
+    let mysql_promise4 = query_database(photoapp_db, sql4);
 
-    //
-    // nothing else to do, so let's asynchronously wait
-    // for ALL the promises to resolve / reject. Note that 
-    // when this resolves, we have a LIST of results, one
-    // per PROMISE. Then we have to extract from each
-    // result...
-    //
-    let results = await Promise.all([s3_promise, mysql_promise1, mysql_promise2]);
+    // Get storage used
+    // let sql5 = `
+    //   SELECT SUM(filesize) AS StorageBytes 
+    //   FROM assets
+    //   WHERE archived = false;
+    // `;
+    // let mysql_promise5 = query_database(photoapp_db, sql5);
+
+    let results = await Promise.all([
+      s3_promise, 
+      mysql_promise1, 
+      mysql_promise2, 
+      mysql_promise3, 
+      mysql_promise4
+    ]);
     
-    // extract the s3 result:
-    let s3_results = results[0];
-    let metadata = s3_results["$metadata"];
-    
-    // extract # of users, which is a list with exactly one row:
-    let rds_user_results = results[1];
-    let user_row = rds_user_results[0];
-    
-    // likewise # of assets:
-    let rds_asset_results = results[2];
-    let asset_row = rds_asset_results[0];
-    
-    //
-    // done, respond with stats:
-    //
     console.log("/stats done, sending response...");
 
     res.json({
-      "message": "success",
-      "s3_status": metadata["httpStatusCode"],
-      "db_numUsers": user_row["NumUsers"],
-      "db_numAssets": asset_row["NumAssets"]
+      "users": results[1][0].NumUsers,
+      "clients": results[2][0].NumClients,
+      "projects": results[3][0].NumProjects,
+      "assets": results[4][0].NumAssets,
+      "storage_bytes": 0, // Would need to calculate from S3 or add filesize field to assets table
+      "processing_jobs": {
+        "pending": 0,
+        "processing": 0,
+        "completed": results[4][0].NumAssets,
+        "failed": 0
+      }
     });
   }//try
   catch (err)
@@ -102,9 +92,12 @@ exports.get_stats = async (req, res) => {
     
     res.status(500).json({
       "message": err.message,
-      "s3_status": -1,
-      "db_numUsers": -1,
-      "db_numAssets": -1
+      "users": -1,
+      "clients": -1,
+      "projects": -1,
+      "assets": -1,
+      "storage_bytes": -1,
+      "processing_jobs": null
     });
   }//catch
 
