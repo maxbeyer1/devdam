@@ -76,7 +76,7 @@ class BucketItem:
 
 
 class Image:
-    user_id: int
+    project_id: int
     asset_name: str
     bucket_key: str
     data: str  # base64 encoded
@@ -466,7 +466,7 @@ def assets(baseurl):
             print(f" Asset name: {asset.assetname}")
             print(f" Description: {asset.description}")
             print(f" Bucket key: {asset.bucketkey}")
-            print(f"Created at: {asset.created_at}")
+            print(f" Created at: {asset.created_at}")
             print(
                 f" Project: {asset.project.projectname} ({asset.project.projectid})")
             print(
@@ -505,15 +505,11 @@ def download(baseurl):
         #
         # call the web service:
         #
-        api = '/image'
-        url = baseurl + api + '/' + assetid
+        api = '/asset'
+        url = baseurl + api + '/' + assetid + '/download'
 
         # res = requests.get(url)
         res = web_service_get(url)
-
-        #
-        # let's look at what we got back:
-        #
         if handle_asset_error(res, url) != 0:
             return
 
@@ -525,19 +521,15 @@ def download(baseurl):
         # map result to Image object
         image = jsons.load(body, Image)
 
-        print("userid:", image.user_id)
+        print("project id:", image.project_id)
         print("asset name:", image.asset_name)
         print("bucket key:", image.bucket_key)
 
         # decode the base64 string into bytes
-        bytes = base64.b64decode(image.data)
+        image_bytes = base64.b64decode(image.data)
 
-        #
-        # write the binary data to a file (as a
-        # binary file, not a text file):
-        #
         outfile = open(image.asset_name, "wb")
-        outfile.write(bytes)
+        outfile.write(image_bytes)
 
         print(f"Downloaded from S3 and saved as '{image.asset_name}'")
 
