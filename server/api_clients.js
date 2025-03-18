@@ -30,6 +30,21 @@ exports.get_clients = async (req, res) => {
 
     console.log("/clients: got results from DB");
 
+    // Format response
+    results = results.map((client) => {
+      return {
+        clientid: client.clientid,
+        clientname: client.clientname,
+        description: client.description || "",
+        created_at: client.created_at,
+        user: {
+          userid: client.userid,
+          firstname: client.firstname,
+          lastname: client.lastname,
+        },
+      };
+    });
+
     res.json({
       message: "success",
       data: results,
@@ -103,14 +118,28 @@ exports.get_client = async (req, res) => {
       return;
     }
 
-    // Combine results
     let client = clientResult[0];
     client.project_count = projectCountResult[0].project_count;
     client.asset_count = assetCountResult[0].asset_count;
 
+    // Format response
+    let response = {
+      clientid: client.clientid,
+      clientname: client.clientname,
+      description: client.description || "",
+      created_at: client.created_at,
+      user: {
+        userid: client.userid,
+        firstname: client.firstname,
+        lastname: client.lastname,
+      },
+      project_count: client.project_count,
+      asset_count: client.asset_count,
+    };
+
     res.json({
       message: "success",
-      data: client,
+      data: response,
     });
   } catch (err) {
     console.log("**Error in /client/:clientid");

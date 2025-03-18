@@ -254,6 +254,14 @@ def prompt():
         print("   5 => bucket contents")
         print("   6 => upload")
         print("   7 => add/update user")
+        print("   8 => clients")
+        print("   9 => client details")
+        print("   10 => add/update client")
+        print("   11 => delete client")
+        print("   12 => projects")
+        print("   13 => project details")
+        print("   14 => add/update project")
+        print("   15 => delete project")
 
         cmd = int(input())
         return cmd
@@ -805,6 +813,547 @@ def add_user(baseurl):
         return
 
 
+###################################################################
+#
+# clients
+#
+def clients(baseurl):
+    """
+    Prints out all the clients in the database
+
+    Parameters
+    ----------
+    baseurl: baseurl for web service
+
+    Returns
+    -------
+    nothing
+    """
+
+    try:
+        api = '/clients'
+        url = baseurl + api
+
+        res = web_service_get(url)
+
+        if res.status_code != 200:
+            # failed:
+            print("Failed with status code:", res.status_code)
+            print("url: " + url)
+            if res.status_code in [400, 500]:  # we'll have an error message
+                body = res.json()
+                print("Error message:", body["message"])
+            #
+            return
+
+        body = res.json()
+
+        # map to Client objects
+        clients = []
+        for row in body["data"]:
+            client = jsons.load(row, Client)
+            clients.append(client)
+
+        if len(clients) == 0:
+            print("No clients found...")
+            return
+
+        for client in clients:
+            print(f"Client id: {client.clientid}")
+            print(f" Name: {client.clientname}")
+            print(f" Description: {client.description}")
+            print(f" Created at: {client.created_at}")
+            print(
+                f" User: {client.user.firstname} {client.user.lastname} ({client.user.userid})")
+            print()
+
+    except Exception as e:
+        logging.error("clients() failed:")
+        logging.error("url: " + url)
+        logging.error(e)
+        return
+
+
+###################################################################
+#
+# client_details
+#
+def client_details(baseurl):
+    """
+    Gets details for a specific client
+
+    Parameters
+    ----------
+    baseurl: baseurl for web service
+
+    Returns
+    -------
+    nothing
+    """
+
+    try:
+        print("Enter client id>")
+        clientid = input()
+
+        api = '/client'
+        url = baseurl + api + '/' + clientid
+
+        res = web_service_get(url)
+
+        if res.status_code != 200:
+            # failed:
+            print("Failed with status code:", res.status_code)
+            print("url: " + url)
+            if res.status_code == 404:
+                print("No such client...")
+                return
+            if res.status_code in [400, 500]:  # we'll have an error message
+                body = res.json()
+                print("Error message:", body["message"])
+            #
+            return
+
+        body = res.json()
+
+        # map to client object
+        client = jsons.load(body["data"], Client)
+
+        print(f"Client id: {client.clientid}")
+        print(f" Name: {client.clientname}")
+        print(f" Description: {client.description}")
+        print(f" Created at: {client.created_at}")
+        print(
+            f" User: {client.user.firstname} {client.user.lastname} ({client.user.userid})")
+        print(f" Project count: {client.project_count}")
+        print(f" Asset count: {client.asset_count}")
+
+    except Exception as e:
+        logging.error("client_details() failed:")
+        logging.error("url: " + url)
+        logging.error(e)
+        return
+
+
+###################################################################
+#
+# add_client
+#
+def add_client(baseurl):
+    """
+    Adds or updates a client
+
+    Parameters
+    ----------
+    baseurl: baseurl for web service
+
+    Returns
+    -------
+    nothing
+    """
+
+    try:
+        print("Enter client id (leave blank for new client)>")
+        clientid = input()
+
+        print("Enter user id for this client>")
+        userid = input()
+
+        print("Enter client name>")
+        clientname = input()
+
+        print("Enter client description (optional)>")
+        description = input()
+
+        # build the data packet
+        data = {
+            "clientname": clientname,
+            "description": description,
+            "userid": userid
+        }
+
+        # add clientid if provided
+        if clientid:
+            data["clientid"] = clientid
+
+        api = '/client'
+        url = baseurl + api
+
+        res = web_service_put(url, data)
+
+        if res.status_code != 200:
+            # failed:
+            print("Failed with status code:", res.status_code)
+            print("url: " + url)
+            if res.status_code in [400, 500]:  # we'll have an error message
+                body = res.json()
+                print("Error message:", body["message"])
+            #
+            return
+
+        body = res.json()
+
+        client_id = body["clientid"]
+        message = body["message"]
+
+        print(f"Client {client_id}\n{message}")
+
+    except Exception as e:
+        logging.error("add_client() failed:")
+        logging.error("url: " + url)
+        logging.error(e)
+        return
+
+
+###################################################################
+#
+# delete_client
+#
+def delete_client(baseurl):
+    """
+    Deletes a client from the database
+
+    Parameters
+    ----------
+    baseurl: baseurl for web service
+
+    Returns
+    -------
+    nothing
+    """
+
+    try:
+        print("Enter client id to delete>")
+        clientid = input()
+
+        #
+        # call the web service:
+        #
+        api = '/client'
+        url = baseurl + api + '/' + clientid
+
+        res = requests.delete(url, timeout=10)
+
+        if res.status_code != 200:
+            # failed:
+            print("Failed with status code:", res.status_code)
+            print("url: " + url)
+            if res.status_code == 400:
+                body = res.json()
+                print("Error message:", body["message"])
+                if "cannot delete client with existing projects" in body["message"].lower():
+                    print("NOTE: you must delete all projects for this client first")
+            elif res.status_code == 404:
+                print("No such client...")
+            elif res.status_code in [400, 500]:  # we'll have an error message
+                body = res.json()
+                print("Error message:", body["message"])
+            #
+            return
+
+        body = res.json()
+        message = body["message"]
+        print(message)
+
+    except Exception as e:
+        logging.error("delete_client() failed:")
+        logging.error("url: " + url)
+        logging.error(e)
+        return
+
+
+###################################################################
+#
+# projects
+#
+def projects(baseurl):
+    """
+    Prints out all projects or projects for a specific client
+
+    Parameters
+    ----------
+    baseurl: baseurl for web service
+
+    Returns
+    -------
+    nothing
+    """
+
+    try:
+        print("Enter client id (leave blank for all projects)>")
+        clientid = input()
+
+        #
+        # call the web service:
+        #
+        api = '/projects'
+        url = baseurl + api
+
+        # Add client filter if provided
+        if clientid:
+            url += f"?clientid={clientid}"
+
+        res = web_service_get(url)
+
+        #
+        # let's look at what we got back:
+        #
+        if res.status_code != 200:
+            # failed:
+            print("Failed with status code:", res.status_code)
+            print("url: " + url)
+            if res.status_code in [400, 500]:  # we'll have an error message
+                body = res.json()
+                print("Error message:", body["message"])
+            #
+            return
+
+        #
+        # deserialize and extract projects:
+        #
+        body = res.json()
+
+        #
+        # let's map each dictionary into a Project object:
+        #
+        projects = []
+        for row in body["data"]:
+            project = jsons.load(row, Project)
+            projects.append(project)
+
+        if len(projects) == 0:
+            print("No projects found...")
+            return
+
+        for project in projects:
+            print(f"Project id: {project.projectid}")
+            print(f" Name: {project.projectname}")
+            print(f" Description: {project.description}")
+            print(f" Created at: {project.created_at}")
+            print(
+                f" Client: {project.client.clientname} ({project.client.clientid})")
+            print()
+
+    except Exception as e:
+        logging.error("projects() failed:")
+        logging.error("url: " + url)
+        logging.error(e)
+        return
+
+
+###################################################################
+#
+# project_details
+#
+def project_details(baseurl):
+    """
+    Gets details for a specific project
+
+    Parameters
+    ----------
+    baseurl: baseurl for web service
+
+    Returns
+    -------
+    nothing
+    """
+
+    try:
+        print("Enter project id>")
+        projectid = input()
+
+        #
+        # call the web service:
+        #
+        api = '/project'
+        url = baseurl + api + '/' + projectid
+
+        res = web_service_get(url)
+
+        #
+        # let's look at what we got back:
+        #
+        if res.status_code != 200:
+            # failed:
+            print("Failed with status code:", res.status_code)
+            print("url: " + url)
+            if res.status_code == 404:
+                print("No such project...")
+                return
+            if res.status_code in [400, 500]:  # we'll have an error message
+                body = res.json()
+                print("Error message:", body["message"])
+            #
+            return
+
+        #
+        # deserialize and extract project data:
+        #
+        body = res.json()
+
+        # map to project object
+        project = jsons.load(body["data"], Project)
+
+        print(f"Project id: {project.projectid}")
+        print(f" Name: {project.projectname}")
+        print(f" Description: {project.description}")
+        print(f" Created at: {project.created_at}")
+        print(
+            f" Client: {project.client.clientname} ({project.client.clientid})")
+        print(f" Asset count: {project.asset_count}")
+        if hasattr(project, 'storage_used'):
+            print(f" Storage used: {project.storage_used} bytes")
+
+    except Exception as e:
+        logging.error("project_details() failed:")
+        logging.error("url: " + url)
+        logging.error(e)
+        return
+
+
+###################################################################
+#
+# add_project
+#
+def add_project(baseurl):
+    """
+    Adds or updates a project
+
+    Parameters
+    ----------
+    baseurl: baseurl for web service
+
+    Returns
+    -------
+    nothing
+    """
+
+    try:
+        print("Enter project id (leave blank for new project)>")
+        projectid = input()
+
+        print("Enter client id for this project>")
+        clientid = input()
+
+        print("Enter project name>")
+        projectname = input()
+
+        print("Enter project description (optional)>")
+        description = input()
+
+        #
+        # build the data packet:
+        #
+        data = {
+            "clientid": clientid,
+            "projectname": projectname,
+            "description": description
+        }
+
+        # Add projectid if provided
+        if projectid:
+            data["projectid"] = projectid
+
+        #
+        # call the web service:
+        #
+        api = '/project'
+        url = baseurl + api
+
+        res = web_service_put(url, data)
+
+        #
+        # let's look at what we got back:
+        #
+        if res.status_code != 200:
+            # failed:
+            print("Failed with status code:", res.status_code)
+            print("url: " + url)
+            if res.status_code in [400, 500]:  # we'll have an error message
+                body = res.json()
+                print("Error message:", body["message"])
+            #
+            return
+
+        #
+        # success, extract projectid:
+        #
+        body = res.json()
+
+        project_id = body["projectid"]
+        message = body["message"]
+
+        print(f"Project {project_id}\n{message}")
+
+    except Exception as e:
+        logging.error("add_project() failed:")
+        logging.error("url: " + url)
+        logging.error(e)
+        return
+
+
+###################################################################
+#
+# delete_project
+#
+def delete_project(baseurl):
+    """
+    Deletes a project from the database
+
+    Parameters
+    ----------
+    baseurl: baseurl for web service
+
+    Returns
+    -------
+    nothing
+    """
+
+    try:
+        print("Enter project id to delete>")
+        projectid = input()
+
+        #
+        # call the web service:
+        #
+        api = '/project'
+        url = baseurl + api + '/' + projectid
+
+        res = requests.delete(url)
+
+        #
+        # let's look at what we got back:
+        #
+        if res.status_code != 200:
+            # failed:
+            print("Failed with status code:", res.status_code)
+            print("url: " + url)
+            if res.status_code == 400:
+                body = res.json()
+                print("Error message:", body["message"])
+                if "cannot delete project with existing assets" in body["message"].lower():
+                    print("NOTE: you must delete all assets for this project first")
+            elif res.status_code == 404:
+                print("No such project...")
+            elif res.status_code in [400, 500]:  # we'll have an error message
+                body = res.json()
+                print("Error message:", body["message"])
+            #
+            return
+
+        #
+        # success
+        #
+        body = res.json()
+        message = body["message"]
+        print(message)
+
+    except Exception as e:
+        logging.error("delete_project() failed:")
+        logging.error("url: " + url)
+        logging.error(e)
+        return
+
+
 #########################################################################
 # main
 #
@@ -887,6 +1436,22 @@ try:
             upload(baseurl)
         elif cmd == 7:
             add_user(baseurl)
+        elif cmd == 8:
+            clients(baseurl)
+        elif cmd == 9:
+            client_details(baseurl)
+        elif cmd == 10:
+            add_client(baseurl)
+        elif cmd == 11:
+            delete_client(baseurl)
+        elif cmd == 12:
+            projects(baseurl)
+        elif cmd == 13:
+            project_details(baseurl)
+        elif cmd == 14:
+            add_project(baseurl)
+        elif cmd == 15:
+            delete_project(baseurl)
         else:
             print("** Unknown command, try again...")
         #

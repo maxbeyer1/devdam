@@ -36,9 +36,22 @@ exports.get_projects = async (req, res) => {
     console.log("/projects: got results from DB");
 
     // Format response
+    let response = results.map((project) => {
+      return {
+        projectid: project.projectid,
+        projectname: project.projectname,
+        description: project.description || "",
+        created_at: project.created_at,
+        client: {
+          clientid: project.clientid,
+          clientname: project.clientname,
+        },
+      };
+    });
+
     res.json({
       message: "success",
-      data: results,
+      data: response,
     });
   } catch (err) {
     console.log("**Error in /projects");
@@ -98,14 +111,25 @@ exports.get_project = async (req, res) => {
       return;
     }
 
-    // Combine results
     let project = projectResult[0];
     project.asset_count = statsResult[0].asset_count;
 
-    // Return project details with statistics
+    // Format response
+    let response = {
+      projectid: project.projectid,
+      projectname: project.projectname,
+      description: project.description || "",
+      created_at: project.created_at,
+      client: {
+        clientid: project.clientid,
+        clientname: project.clientname,
+      },
+      asset_count: project.asset_count,
+    };
+
     res.json({
       message: "success",
-      data: project,
+      data: response,
     });
   } catch (err) {
     console.log("**Error in /project/:projectid");
