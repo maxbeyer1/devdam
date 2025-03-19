@@ -1,0 +1,7 @@
+# Dependency directories
+PIL/
+pillow-*/
+pymysql/
+PyMySQL-*/
+
+lambda_deployment.zip
