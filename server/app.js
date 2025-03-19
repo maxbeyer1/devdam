@@ -99,6 +99,10 @@ let projects = require("./api_projects.js");
 let assets = require("./api_assets.js");
 let asset = require("./api_asset.js");
 let asset_post = require("./api_asset_post.js");
+let asset_variant = require("./api_asset_variant.js");
+
+// Processing jobs management
+let job = require("./api_job.js");
 
 app.get("/stats", stats.get_stats);
 app.get("/bucket", bucket.get_bucket);
@@ -122,3 +126,11 @@ app.put("/asset/:assetid", asset.put_asset);
 app.delete("/asset/:assetid", asset.delete_asset);
 app.get("/asset/:assetid/download", asset.download_asset);
 app.post("/asset/:projectid", asset_post.post_asset);
+
+app.get("/asset/:assetid/variants", asset_variant.get_asset_variants);
+app.get(
+  "/asset/:assetid/variant/:variantid/download",
+  asset_variant.download_variant
+);
+
+app.get("/job/:jobid", job.get_job);

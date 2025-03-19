@@ -31,6 +31,31 @@ exports.post_asset = async (req, res) => {
     let image_data = data.data; // Base64 encoded image data
     let description = data.description || "";
 
+    // Processing options for images
+    // Ex: {
+    //   variants: [
+    //     {
+    //      "type": "thumbnail",
+    //      "width": 200,
+    //      "height": 200,
+    //      "format": "webp",
+    //      "quality": 80
+    //     },
+    //   ]
+    // }
+    // TODO: Remove default processing options used for testing
+    let processing_options = data.processing_options || {
+      variants: [
+        {
+          type: "thumbnail",
+          width: 200,
+          height: 200,
+          format: "webp",
+          quality: 80,
+        },
+      ],
+    };
+
     // Check if project exists and get user ID
     let projectSql = `
       SELECT p.projectid, c.userid
@@ -96,6 +121,12 @@ exports.post_asset = async (req, res) => {
       Body: bytes,
       ContentType: contentType,
       ACL: "public-read",
+      Metadata: {
+        assetid: asset_id,
+        projectid: projectid.toString(),
+        userid: userid.toString(),
+        processing_options: JSON.stringify(processing_options),
+      },
     };
 
     console.log("/asset: calling S3 to upload image...");
@@ -126,17 +157,74 @@ exports.post_asset = async (req, res) => {
 
     console.log("/asset: got results from DB");
 
-    if (insertResult.affectedRows === 1) {
-      res.json({
-        message: "success",
-        asset_id: insertResult.insertId,
-      });
-    } else {
+    // if (insertResult.affectedRows === 1) {
+    //   res.json({
+    //     message: "success",
+    //     asset_id: insertResult.insertId,
+    //   });
+    // } else {
+    //   res.status(500).json({
+    //     message: "Failed to insert asset record",
+    //     asset_id: -1,
+    //   });
+    // }
+
+    if (insertResult.affectedRows !== 1) {
+      console.log("/asset: failed to insert asset in DB");
+
       res.status(500).json({
         message: "Failed to insert asset record",
         asset_id: -1,
       });
+      return;
     }
+
+    let assetid = insertResult.insertId;
+
+    // Create processing job
+    let jobSql = `
+      INSERT INTO processing_jobs (
+        assetid,
+        status,
+        processing_options
+      ) VALUES (
+        ${assetid},
+        'pending',
+        '${JSON.stringify(processing_options)}'
+      );
+    `;
+
+    console.log("/asset: calling DB to insert processing job...");
+
+    let jobResult = await query_database(photoapp_db, jobSql);
+
+    if (jobResult.affectedRows !== 1) {
+      console.log("/asset: failed to insert processing job in DB");
+
+      res.status(500).json({
+        message: "Failed to create processing job",
+        asset_id: assetid,
+      });
+      return;
+    }
+
+    console.log("/asset: inserted processing job in DB");
+
+    let jobid = jobResult.insertId;
+    let variants_total = processing_options.variants
+      ? processing_options.variants.length
+      : 0;
+
+    res.json({
+      message: "success",
+      asset_id: assetid,
+      processing_job: {
+        jobid: jobid,
+        status: "pending",
+        variants_total: variants_total,
+        variants_completed: 0,
+      },
+    });
   } catch (err) {
     console.log("**Error in POST /asset/:projectid");
     console.log(err.message);
