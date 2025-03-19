@@ -2,6 +2,26 @@
 // Helper functions
 //
 
+// getContentType:
+//   Returns the content type for a given file extension
+// Helper function to determine content type from file extension
+function getContentType(extension) {
+  const contentTypes = {
+    ".jpg": "image/jpeg",
+    ".jpeg": "image/jpeg",
+    ".png": "image/png",
+    ".gif": "image/gif",
+    ".svg": "image/svg+xml",
+    ".webp": "image/webp",
+    ".bmp": "image/bmp",
+    ".tiff": "image/tiff",
+    ".tif": "image/tiff",
+    ".ico": "image/x-icon",
+  };
+
+  return contentTypes[extension] || "image/jpeg"; // Default to JPEG if unknown
+}
+
 //
 // query_database:
 //
@@ -44,4 +64,4 @@ function query_database(db, sql, params = []) {
 //
 // list the functions we are exporting:
 //
-module.exports = { query_database };
+module.exports = { query_database, getContentType };

@@ -5,8 +5,9 @@
 const photoapp_db = require("./photoapp_db.js");
 const { PutObjectCommand } = require("@aws-sdk/client-s3");
 const { photoapp_s3, s3_bucket_name } = require("./photoapp_s3.js");
-const { query_database } = require("./utility.js");
+const { query_database, getContentType } = require("./utility.js");
 const uuid = require("uuid");
+const path = require("path");
 
 //
 // POST /asset/:projectid - Upload a new asset to a project
@@ -73,9 +74,17 @@ exports.post_asset = async (req, res) => {
 
     let bucketfolder = userResult[0].bucketfolder;
 
+    // Extract file extension from assetname
+    let extension = path.extname(assetname).toLowerCase();
+    if (!extension) {
+      extension = ".jpg"; // Default to .jpg if no extension provided
+    }
+
+    let contentType = getContentType(extension);
+
     // Generate unique ID and S3 key
     let asset_id = uuid.v4();
-    let asset_key = `${bucketfolder}/p${projectid}/${asset_id}.jpg`;
+    let asset_key = `${bucketfolder}/p${projectid}/${asset_id}${extension}`;
 
     // Convert base64 to binary
     let bytes = Buffer.from(image_data, "base64");
@@ -85,7 +94,7 @@ exports.post_asset = async (req, res) => {
       Bucket: s3_bucket_name,
       Key: asset_key,
       Body: bytes,
-      ContentType: "image/jpeg",
+      ContentType: contentType,
       ACL: "public-read",
     };
 

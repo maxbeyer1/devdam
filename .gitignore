@@ -8,5 +8,16 @@
 **/.bash_history
 .vscode
 
-photoapp-config.ini
+# Testing files
 **/*.jpg
+**/*.jpeg
+**/*.png
+**/*.gif
+**/*.svg
+**/*.webp
+**/*.bmp
+**/*.tiff
+**/*.tif
+**/*.ico
+
+photoapp-config.ini

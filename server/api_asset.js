@@ -3,7 +3,7 @@
 // Asset management API endpoints for single asset operations
 //
 const photoapp_db = require("./photoapp_db.js");
-const { GetObjectCommand } = require("@aws-sdk/client-s3");
+const { GetObjectCommand, DeleteObjectCommand } = require("@aws-sdk/client-s3");
 const { photoapp_s3, s3_bucket_name } = require("./photoapp_s3.js");
 const { query_database } = require("./utility.js");
 
