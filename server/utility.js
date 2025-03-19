@@ -17,6 +17,7 @@ function getContentType(extension) {
     ".tiff": "image/tiff",
     ".tif": "image/tiff",
     ".ico": "image/x-icon",
+    ".avif": "image/avif",
   };
 
   return contentTypes[extension] || "image/jpeg"; // Default to JPEG if unknown

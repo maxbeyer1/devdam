@@ -101,8 +101,9 @@ let asset = require("./api_asset.js");
 let asset_post = require("./api_asset_post.js");
 let asset_variant = require("./api_asset_variant.js");
 
-// Processing jobs management
+// Special operations
 let job = require("./api_job.js");
+let cdn = require("./api_cdn.js");
 
 app.get("/stats", stats.get_stats);
 app.get("/bucket", bucket.get_bucket);
@@ -132,5 +133,7 @@ app.get(
   "/asset/:assetid/variant/:variantid/download",
   asset_variant.download_variant
 );
+
+app.get("/asset/:assetid/cdn-urls", cdn.get_cdn_urls);
 
 app.get("/job/:jobid", job.get_job);
