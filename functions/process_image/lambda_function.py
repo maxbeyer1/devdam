@@ -16,7 +16,7 @@ s3 = boto3.client('s3')
 CONFIG_FILE = 'devdam-functions-config.ini'
 # Default to S3 domain if not specified
 CDN_DOMAIN = os.environ.get(
-    'CDN_DOMAIN', 'https://dam-assets-beyer-cs310.s3.us-east-2.amazonaws.com')
+    'CDN_DOMAIN', 'dam-assets-beyer-cs310.s3.us-east-2.amazonaws.com')
 
 
 def get_db_connection():
