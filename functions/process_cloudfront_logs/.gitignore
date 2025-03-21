@@ -1,7 +1,4 @@
 # Dependency directories
-PIL/
-pillow-*/
-pillow.libs/
 pymysql/
 PyMySQL-*/
 
