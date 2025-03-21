@@ -150,14 +150,6 @@ class ClientUsageSummary:
     access_percentage: int
 
 
-class ProjectUsageStats:
-    projectid: int
-    projectname: str
-    asset_count: int
-    total_accesses: int
-    last_accessed: str
-
-
 class ClientUsage:
     clientid: int
     clientname: str
@@ -2065,7 +2057,7 @@ def top_assets(baseurl):
 # main
 #
 try:
-    print('** Welcome to Multi-tier PhotoApp **')
+    print('** Welcome to devDAM **')
     print()
 
     # eliminate traceback so we just get error message:
