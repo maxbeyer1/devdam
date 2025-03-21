@@ -104,6 +104,7 @@ let asset_variant = require("./api_asset_variant.js");
 // Special operations
 let job = require("./api_job.js");
 let cdn = require("./api_cdn.js");
+let usage = require("./api_usage.js");
 
 app.get("/stats", stats.get_stats);
 app.get("/bucket", bucket.get_bucket);
@@ -137,3 +138,8 @@ app.get(
 app.get("/asset/:assetid/cdn-urls", cdn.get_cdn_urls);
 
 app.get("/job/:jobid", job.get_job);
+
+app.get("/asset/:assetid/usage", usage.get_asset_usage);
+app.get("/project/:projectid/usage", usage.get_project_usage);
+app.get("/client/:clientid/usage", usage.get_client_usage);
+app.get("/usage/top-assets", usage.get_top_assets);
