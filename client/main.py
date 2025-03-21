@@ -82,6 +82,101 @@ class Image:
     data: str  # base64 encoded
 
 
+class ProcessingJob:
+    jobid: int
+    assetid: int
+    assetname: str
+    status: str
+    created_at: str
+    completed_at: str
+    error_message: str
+    variants_completed: int
+    variants_total: int
+
+
+class AssetVariant:
+    variantid: int
+    variant_type: str
+    width: int
+    height: int
+    format: str
+    quality: int
+    filesize: int
+    bucketkey: str
+    cdn_url: str
+
+
+class CDNUrls:
+    asset_id: int
+    asset_name: str
+    variants: list
+    html_snippets: dict
+
+
+class UsageStats:
+    last_accessed: str
+    access_count: int
+    last_referer: str
+    unique_referers: int
+
+
+class AssetUsage:
+    assetid: int
+    assetname: str
+    usage: UsageStats
+
+
+class ProjectUsageSummary:
+    total_assets: int
+    total_accesses: int
+    last_accessed: str
+    assets_accessed: int
+    access_percentage: int
+
+
+class ProjectUsage:
+    projectid: int
+    projectname: str
+    summary: ProjectUsageSummary
+    assets: list
+
+
+class ClientUsageSummary:
+    total_projects: int
+    total_assets: int
+    total_accesses: int
+    last_accessed: str
+    assets_accessed: int
+    access_percentage: int
+
+
+class ProjectUsageStats:
+    projectid: int
+    projectname: str
+    asset_count: int
+    total_accesses: int
+    last_accessed: str
+
+
+class ClientUsage:
+    clientid: int
+    clientname: str
+    summary: ClientUsageSummary
+    projects: list
+
+
+class TopAsset:
+    assetid: int
+    assetname: str
+    projectid: int
+    projectname: str
+    clientid: int
+    clientname: str
+    access_count: int
+    last_accessed: str
+    unique_referers: int
+
+
 ###################################################################
 #
 # helper functions
@@ -262,6 +357,13 @@ def prompt():
         print("   13 => project details")
         print("   14 => add/update project")
         print("   15 => delete project")
+        print("   16 => check processing job")
+        print("   17 => get asset variants and CDN urls")
+        print("   18 => get asset usage stats")
+        print("   19 => get project usage stats")
+        print("   20 => get client usage stats")
+        print("   21 => get top assets by usage")
+        print("   22 => download variant")
 
         cmd = int(input())
         return cmd
@@ -674,6 +776,116 @@ def upload(baseurl):
         print("Enter asset description (optional)>")
         description = input()
 
+        # Processing options selection
+        print("\nSelect processing options:")
+        print("1 => Minimal (thumbnail only)")
+        print("2 => Standard (thumbnail, medium, large)")
+        print("3 => Comprehensive (thumbnail, small, medium, large, xl)")
+        print("4 => Custom")
+        print("Enter your choice (default: 2)>")
+
+        choice = input() or "2"
+
+        # Define format options
+        formats = {
+            "1": "webp",
+            "2": "jpg",
+            "3": "png"
+        }
+
+        # Default processing options
+        processing_options = {
+            "variants": []
+        }
+
+        if choice == "1":
+            # Minimal
+            processing_options["variants"] = [
+                {"type": "thumbnail", "width": 200, "height": 200,
+                    "format": "webp", "quality": 80}
+            ]
+        elif choice == "3":
+            # Comprehensive
+            processing_options["variants"] = [
+                {"type": "thumbnail", "width": 200, "height": 200,
+                    "format": "webp", "quality": 80},
+                {"type": "small", "width": 400, "height": None,
+                    "format": "webp", "quality": 85},
+                {"type": "medium", "width": 800, "height": None,
+                    "format": "webp", "quality": 85},
+                {"type": "large", "width": 1600, "height": None,
+                    "format": "webp", "quality": 90},
+                {"type": "xl", "width": 2400, "height": None,
+                    "format": "webp", "quality": 90}
+            ]
+        elif choice == "4":
+            # Custom
+            print("\nHow many variants would you like to create? (1-5)>")
+            num_variants = int(input() or "1")
+            num_variants = max(1, min(5, num_variants))
+
+            for i in range(num_variants):
+                print(f"\nVariant {i+1}:")
+
+                print("Enter variant type (e.g., thumbnail, medium, large)>")
+                variant_type = input() or f"variant_{i+1}"
+
+                print("Enter width in pixels (leave blank for auto)>")
+                width_input = input()
+                width = int(width_input) if width_input else None
+
+                print("Enter height in pixels (leave blank for auto)>")
+                height_input = input()
+                height = int(height_input) if height_input else None
+
+                print("Select format:")
+                print("1 => WebP (recommended)")
+                print("2 => JPEG")
+                print("3 => PNG")
+                format_choice = input() or "1"
+                format = formats.get(format_choice, "webp")
+
+                print("Enter quality (1-100, recommended: 80-90)>")
+                quality_input = input() or "85"
+                quality = min(100, max(1, int(quality_input)))
+
+                variant = {
+                    "type": variant_type,
+                    "width": width,
+                    "height": height,
+                    "format": format,
+                    "quality": quality
+                }
+
+                processing_options["variants"].append(variant)
+        else:
+            # Standard (default)
+            processing_options["variants"] = [
+                {"type": "thumbnail", "width": 200, "height": 200,
+                    "format": "webp", "quality": 80},
+                {"type": "medium", "width": 800, "height": None,
+                    "format": "webp", "quality": 85},
+                {"type": "large", "width": 1600, "height": None,
+                    "format": "webp", "quality": 90}
+            ]
+
+        # Ask if user for format pref
+        if choice != "4":  # Skip if already customized
+            print("\nWould you like to adjust the format for all variants? (y/n)>")
+            change_format = input().lower() == "y"
+
+            if change_format:
+                print("Select format:")
+                print("1 => WebP (recommended)")
+                print("2 => JPEG")
+                print("3 => PNG")
+                format_choice = input() or "1"
+                selected_format = formats.get(format_choice, "webp")
+
+                # Update format for all variants
+                for variant in processing_options["variants"]:
+                    variant["format"] = selected_format
+
         #
         # build the data packet:
         #
@@ -690,8 +902,20 @@ def upload(baseurl):
         data = base64.b64encode(bytes)
         datastr = data.decode()
 
-        data = {"assetname": local_filename,
-                "description": description, "data": datastr}
+        data = {
+            "assetname": local_filename,
+            "description": description,
+            "data": datastr,
+            "processing_options": processing_options
+        }
+
+        # Show options summary
+        print("\nUploading with the following processing options:")
+        for i, variant in enumerate(processing_options["variants"], 1):
+            width_display = variant["width"] if variant["width"] else "auto"
+            height_display = variant["height"] if variant["height"] else "auto"
+            print(
+                f"{i}. {variant['type']}: {width_display}x{height_display} {variant['format']} (quality: {variant['quality']})")
 
         #
         # call the web service:
@@ -721,7 +945,19 @@ def upload(baseurl):
 
         asset_id = body["asset_id"]
 
+        # Get processing job info if available
+        processing_job = body.get("processing_job", {})
+        job_id = processing_job.get("jobid", None)
+        job_status = processing_job.get("status", "unknown")
+        variants_total = processing_job.get("variants_total", 0)
+
         print(f"Image uploaded, asset id = {asset_id}")
+
+        if job_id:
+            print(f"Processing job created (ID: {job_id})")
+            print(f"Status: {job_status}")
+            print(f"Processing {variants_total} variants...")
+            print("Use 'cmd 16 - check processing job' to monitor the job status.")
 
     except Exception as e:
         logging.error("upload() failed:")
@@ -1354,6 +1590,477 @@ def delete_project(baseurl):
         return
 
 
+###################################################################
+#
+# check_processing_job
+#
+def check_processing_job(baseurl):
+    """
+    Checks the status of an asset processing job
+
+    Parameters
+    ----------
+    baseurl: baseurl for web service
+
+    Returns
+    -------
+    nothing
+    """
+
+    try:
+        print("Enter job id>")
+        jobid = input()
+
+        api = '/job'
+        url = baseurl + api + '/' + jobid
+
+        res = web_service_get(url)
+
+        if res.status_code != 200:
+            # failed:
+            print("Failed with status code:", res.status_code)
+            print("url: " + url)
+            if res.status_code == 404:
+                print("No such job...")
+                return
+            if res.status_code in [400, 500]:  # we'll have an error message
+                body = res.json()
+                print("Error message:", body["message"])
+            return
+
+        body = res.json()
+
+        job = jsons.load(body["data"], ProcessingJob)
+
+        print(f"Job ID: {job.jobid}")
+        print(f"Asset: {job.assetname} (ID: {job.assetid})")
+        print(f"Status: {job.status}")
+        print(f"Created: {job.created_at}")
+        if job.completed_at:
+            print(f"Completed: {job.completed_at}")
+        if job.error_message:
+            print(f"Error: {job.error_message}")
+        print(
+            f"Variants: {job.variants_completed} of {job.variants_total} completed")
+
+    except Exception as e:
+        logging.error("check_processing_job() failed:")
+        logging.error("url: " + url)
+        logging.error(e)
+        return
+
+
+###################################################################
+#
+# get_cdn_urls
+#
+def get_cdn_urls(baseurl):
+    """
+    Gets CDN URLs for an asset
+
+    Parameters
+    ----------
+    baseurl: baseurl for web service
+
+    Returns
+    -------
+    nothing
+    """
+
+    try:
+        print("Enter asset id>")
+        assetid = input()
+
+        api = '/asset'
+        url = baseurl + api + '/' + assetid + '/cdn-urls'
+
+        res = web_service_get(url)
+
+        if res.status_code != 200:
+            # failed:
+            print("Failed with status code:", res.status_code)
+            print("url: " + url)
+            if res.status_code == 404:
+                print("No variants found for this asset...")
+                return
+            if res.status_code in [400, 500]:  # we'll have an error message
+                body = res.json()
+                print("Error message:", body["message"])
+            return
+
+        body = res.json()
+
+        cdn_data = jsons.load(body["data"], CDNUrls)
+
+        print(
+            f"CDN URLs for asset: {cdn_data.asset_name} (ID: {cdn_data.asset_id})")
+        print("\nVariants:")
+        for variant in cdn_data.variants:
+            print(
+                f"- {variant['variant_type']}: {variant['width']}x{variant['height']} {variant['format']} (quality: {variant['quality']})")
+            print(f"  Variant ID: {variant['variantid']}")
+            print(f"  URL: {variant['cdn_url']}")
+
+        print("\nHTML Snippets:")
+        print("\n<img> tag with srcset:")
+        print(cdn_data.html_snippets["img_tag"])
+
+        print("\n<picture> element:")
+        print(cdn_data.html_snippets["picture_tag"])
+
+    except Exception as e:
+        logging.error("get_cdn_urls() failed:")
+        logging.error("url: " + url)
+        logging.error(e)
+        return
+
+
+###################################################################
+#
+# download_variant
+#
+def download_variant(baseurl):
+    """
+    Prompts the user for an asset id and variant id, and downloads
+    that variant from the bucket.
+
+    Parameters
+    ----------
+    baseurl: baseurl for web service
+
+    Returns
+    -------
+    nothing
+    """
+
+    try:
+        print("Enter asset id>")
+        assetid = input()
+
+        print("Enter variant id>")
+        variantid = input()
+
+        api = '/asset'
+        url = baseurl + api + '/' + assetid + '/variant/' + variantid + '/download'
+
+        res = web_service_get(url)
+
+        if res.status_code != 200:
+            # failed:
+            print("Failed with status code:", res.status_code)
+            print("url: " + url)
+            if res.status_code == 404:
+                print("Variant not found...")
+                return
+            if res.status_code in [400, 500]:  # we'll have an error message
+                body = res.json()
+                print("Error message:", body["message"])
+            return
+
+        body = res.json()
+
+        variant_type = body["variant_type"]
+        asset_name = body["asset_name"]
+        bucket_key = body["bucket_key"]
+        image_data = body["data"]
+
+        print("variant type:", variant_type)
+        print("asset name:", asset_name)
+        print("bucket key:", bucket_key)
+
+        # Generate a filename that includes the variant type
+        base_name = os.path.splitext(asset_name)[0]
+        ext = bucket_key.split('.')[-1].lower()
+        variant_filename = f"{base_name}_{variant_type}.{ext}"
+
+        # decode the base64 string into bytes
+        image_bytes = base64.b64decode(image_data)
+
+        outfile = open(variant_filename, "wb")
+        outfile.write(image_bytes)
+
+        print(f"Downloaded variant from S3 and saved as '{variant_filename}'")
+
+    except Exception as e:
+        logging.error("download_variant() failed:")
+        logging.error("url: " + url)
+        logging.error(e)
+        return
+
+
+###################################################################
+#
+# asset_usage
+#
+def asset_usage(baseurl):
+    """
+    Gets usage statistics for an asset
+
+    Parameters
+    ----------
+    baseurl: baseurl for web service
+
+    Returns
+    -------
+    nothing
+    """
+
+    try:
+        print("Enter asset id>")
+        assetid = input()
+
+        api = '/asset'
+        url = baseurl + api + '/' + assetid + '/usage'
+
+        res = web_service_get(url)
+
+        if res.status_code != 200:
+            # failed:
+            print("Failed with status code:", res.status_code)
+            print("url: " + url)
+            if res.status_code == 404:
+                print("Asset not found...")
+                return
+            if res.status_code in [400, 500]:  # we'll have an error message
+                body = res.json()
+                print("Error message:", body["message"])
+            return
+
+        body = res.json()
+
+        usage_data = jsons.load(body["data"], AssetUsage)
+
+        print(
+            f"Usage statistics for asset: {usage_data.assetname} (ID: {usage_data.assetid})")
+
+        if usage_data.usage.access_count == 0:
+            print("This asset has not been accessed yet.")
+            return
+
+        print(f"Total accesses: {usage_data.usage.access_count}")
+        print(f"Last accessed: {usage_data.usage.last_accessed}")
+        print(f"Unique referrers: {usage_data.usage.unique_referers}")
+        if usage_data.usage.last_referer:
+            print(f"Last referrer: {usage_data.usage.last_referer}")
+
+    except Exception as e:
+        logging.error("asset_usage() failed:")
+        logging.error("url: " + url)
+        logging.error(e)
+        return
+
+
+###################################################################
+#
+# project_usage
+#
+def project_usage(baseurl):
+    """
+    Gets usage statistics for a project
+
+    Parameters
+    ----------
+    baseurl: baseurl for web service
+
+    Returns
+    -------
+    nothing
+    """
+
+    try:
+        print("Enter project id>")
+        projectid = input()
+
+        api = '/project'
+        url = baseurl + api + '/' + projectid + '/usage'
+
+        res = web_service_get(url)
+
+        if res.status_code != 200:
+            # failed:
+            print("Failed with status code:", res.status_code)
+            print("url: " + url)
+            if res.status_code == 404:
+                print("Project not found...")
+                return
+            if res.status_code in [400, 500]:  # we'll have an error message
+                body = res.json()
+                print("Error message:", body["message"])
+            return
+
+        body = res.json()
+
+        usage_data = jsons.load(body["data"], ProjectUsage)
+
+        # Print nicely
+        print(
+            f"Usage statistics for project: {usage_data.projectname} (ID: {usage_data.projectid})")
+        print("\nSummary:")
+        print(f"Total assets: {usage_data.summary.total_assets}")
+        print(f"Total accesses: {usage_data.summary.total_accesses}")
+        print(
+            f"Assets accessed: {usage_data.summary.assets_accessed} ({usage_data.summary.access_percentage}%)")
+
+        if usage_data.summary.last_accessed:
+            print(f"Last accessed: {usage_data.summary.last_accessed}")
+        else:
+            print("No assets have been accessed yet.")
+            return
+
+        print("\nAsset Details:")
+        for asset in usage_data.assets:
+            print(f"- {asset['assetname']} (ID: {asset['assetid']})")
+            print(f"  Accesses: {asset['access_count']}")
+            if asset['last_accessed']:
+                print(f"  Last accessed: {asset['last_accessed']}")
+            print(f"  Unique referrers: {asset['unique_referers']}")
+            print()
+
+    except Exception as e:
+        logging.error("project_usage() failed:")
+        logging.error("url: " + url)
+        logging.error(e)
+        return
+
+
+###################################################################
+#
+# client_usage
+#
+def client_usage(baseurl):
+    """
+    Gets usage statistics for a client
+
+    Parameters
+    ----------
+    baseurl: baseurl for web service
+
+    Returns
+    -------
+    nothing
+    """
+
+    try:
+        print("Enter client id>")
+        clientid = input()
+
+        api = '/client'
+        url = baseurl + api + '/' + clientid + '/usage'
+
+        res = web_service_get(url)
+
+        if res.status_code != 200:
+            # failed:
+            print("Failed with status code:", res.status_code)
+            print("url: " + url)
+            if res.status_code == 404:
+                print("Client not found...")
+                return
+            if res.status_code in [400, 500]:  # we'll have an error message
+                body = res.json()
+                print("Error message:", body["message"])
+            return
+
+        body = res.json()
+
+        usage_data = jsons.load(body["data"], ClientUsage)
+
+        print(
+            f"Usage statistics for client: {usage_data.clientname} (ID: {usage_data.clientid})")
+        print("\nSummary:")
+        print(f"Total projects: {usage_data.summary.total_projects}")
+        print(f"Total assets: {usage_data.summary.total_assets}")
+        print(f"Total accesses: {usage_data.summary.total_accesses}")
+        print(
+            f"Assets accessed: {usage_data.summary.assets_accessed} ({usage_data.summary.access_percentage}%)")
+
+        if usage_data.summary.last_accessed:
+            print(f"Last accessed: {usage_data.summary.last_accessed}")
+        else:
+            print("No assets have been accessed yet.")
+            return
+
+        print("\nProject Details:")
+        for project in usage_data.projects:
+            print(f"- {project['projectname']} (ID: {project['projectid']})")
+            print(f"  Assets: {project['asset_count']}")
+            print(f"  Total accesses: {project['total_accesses']}")
+            if project['last_accessed']:
+                print(f"  Last accessed: {project['last_accessed']}")
+            print()
+
+    except Exception as e:
+        logging.error("client_usage() failed:")
+        logging.error("url: " + url)
+        logging.error(e)
+        return
+
+
+###################################################################
+#
+# top_assets
+#
+def top_assets(baseurl):
+    """
+    Gets the top accessed assets across the system
+
+    Parameters
+    ----------
+    baseurl: baseurl for web service
+
+    Returns
+    -------
+    nothing
+    """
+
+    try:
+        print("How many top assets to display? (default: 10)>")
+        limit = input() or "10"
+
+        api = '/usage/top-assets'
+        url = baseurl + api + '?limit=' + limit
+
+        res = web_service_get(url)
+
+        if res.status_code != 200:
+            # failed:
+            print("Failed with status code:", res.status_code)
+            print("url: " + url)
+            if res.status_code in [400, 500]:  # we'll have an error message
+                body = res.json()
+                print("Error message:", body["message"])
+            return
+
+        body = res.json()
+
+        top_assets_data = []
+        for asset in body["data"]:
+            top_asset = jsons.load(asset, TopAsset)
+            top_assets_data.append(top_asset)
+
+        if len(top_assets_data) == 0:
+            print("No asset usage data available yet.")
+            return
+
+        print(f"Top {len(top_assets_data)} assets by access count:")
+        print()
+
+        for i, asset in enumerate(top_assets_data, 1):
+            print(f"{i}. {asset.assetname} (ID: {asset.assetid})")
+            print(f"   Project: {asset.projectname} (ID: {asset.projectid})")
+            print(f"   Client: {asset.clientname} (ID: {asset.clientid})")
+            print(f"   Access count: {asset.access_count}")
+            print(f"   Last accessed: {asset.last_accessed}")
+            print(f"   Unique referrers: {asset.unique_referers}")
+            print()
+
+    except Exception as e:
+        logging.error("top_assets() failed:")
+        logging.error("url: " + url)
+        logging.error(e)
+        return
+
+
 #########################################################################
 # main
 #
@@ -1452,6 +2159,20 @@ try:
             add_project(baseurl)
         elif cmd == 15:
             delete_project(baseurl)
+        elif cmd == 16:
+            check_processing_job(baseurl)
+        elif cmd == 17:
+            get_cdn_urls(baseurl)
+        elif cmd == 18:
+            asset_usage(baseurl)
+        elif cmd == 19:
+            project_usage(baseurl)
+        elif cmd == 20:
+            client_usage(baseurl)
+        elif cmd == 21:
+            top_assets(baseurl)
+        elif cmd == 22:
+            download_variant(baseurl)
         else:
             print("** Unknown command, try again...")
         #

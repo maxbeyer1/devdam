@@ -55,15 +55,15 @@ exports.get_asset_usage = async (req, res) => {
       usage:
         usageResult.length > 0
           ? {
-              last_accessed: usageResult[0].last_accessed,
+              last_accessed: usageResult[0].last_accessed || "",
               access_count: usageResult[0].access_count,
-              last_referer: usageResult[0].last_referer,
+              last_referer: usageResult[0].last_referer || "",
               unique_referers: usageResult[0].unique_referers,
             }
           : {
-              last_accessed: null,
+              last_accessed: "",
               access_count: 0,
-              last_referer: null,
+              last_referer: "",
               unique_referers: 0,
             },
     };

@@ -63,7 +63,7 @@ exports.get_job = async (req, res) => {
       status: job.status,
       created_at: job.created_at,
       completed_at: job.completed_at,
-      error_message: job.error_message,
+      error_message: job.error_message || "",
       variants_completed: job.status === "completed" ? variantCount : 0,
       variants_total: variantCount,
     };
