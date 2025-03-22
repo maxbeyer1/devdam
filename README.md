@@ -1,4 +1,4 @@
-# Digital Asset Manager (DAM)
+# devDAM (Digital Asset Manager)
 
 A multi-tier application for managing digital assets with automated image processing, CDN integration, and usage tracking capabilities.
 
