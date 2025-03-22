@@ -73,13 +73,6 @@ exports.get_stats = async (req, res) => {
       clients: results[2][0].NumClients,
       projects: results[3][0].NumProjects,
       assets: results[4][0].NumAssets,
-      // FOR FUTURE USE:
-      // processing_jobs: {
-      //   pending: 0,
-      //   processing: 0,
-      //   completed: results[4][0].NumAssets,
-      //   failed: 0,
-      // },
     });
   } catch (err) {
     //try

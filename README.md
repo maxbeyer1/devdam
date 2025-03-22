@@ -2,15 +2,6 @@
 
 A multi-tier application for managing digital assets with automated image processing, CDN integration, and usage tracking capabilities.
 
-## Architecture Overview
-
-- **Client**: Python command-line application
-- **Backend**: Node.js/Express API deployed on Elastic Beanstalk
-- **Storage**: S3 for assets, RDS MySQL for metadata
-- **Processing**: Lambda for image variants and log analysis
-- **Delivery**: CloudFront CDN for optimized asset delivery
-- **Monitoring**: Lambda to process logs and generate metrics
-
 ## Setup Guide
 
 ### AWS Infrastructure Setup

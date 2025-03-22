@@ -51,12 +51,6 @@ exports.get_assets = async (req, res) => {
           clientid: asset.clientid,
           clientname: asset.clientname,
         },
-        // FOR FUTURE USE
-        // "variants": [],
-        // "usage": {
-        //   "last_accessed": null,
-        //   "access_count": 0,
-        // }
       };
     });
 
